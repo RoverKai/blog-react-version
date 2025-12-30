@@ -35,7 +35,7 @@ export default function Home() {
 
   useEffect(() => {
     let i = 0;
-    let waitTime = 50;
+    let waitTime = 40;
 
     const timer = setInterval(() => {
       setPrint(meString.slice(0, i));

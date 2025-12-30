@@ -4,17 +4,26 @@ import type { StackRef } from "~/types/StackItem";
 
 type StackItemProps = {
   item: StackRef;
+  onSelect?: (key: string) => void;
 };
 
-function StackItem({ item }: StackItemProps) {
+function StackItem({ item, onSelect }: StackItemProps) {
   const navigate = useNavigate();
   const [hover, setHover] = useState(false);
+
+  const handleClick = () => {
+    if ((item.key === 'blogs' || item.key === 'projects') && onSelect) {
+      onSelect(item.key);
+    } else {
+      navigate(item.path);
+    }
+  };
 
   return (
     <div
   onMouseEnter={() => setHover(true)}
   onMouseLeave={() => setHover(false)}
-  onClick={() => navigate(item.path)}
+  onClick={handleClick}
   className="cursor-pointer mb-2 h-8"
 >
   <div className="flex justify-between">

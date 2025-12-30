@@ -44,7 +44,7 @@ export default function Home() {
       if (i > meString.length) {
         clearInterval(timer);
         setTimeout(() => {
-          navigate("test");
+          navigate("memoryMap");
         }, 1000);
       }
     }, waitTime);

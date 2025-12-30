@@ -19,9 +19,6 @@ const MemoryMap = () => {
   const blogRef = useRef<HTMLDivElement>(null);
   const projectRef = useRef<HTMLDivElement>(null);
 
-  /** inspector 初始基准位置（只记录一次） */
-  const basePosRef = useRef<{ left: number; top: number } | null>(null);
-
   const handleSelect = (key: string) => {
     setSelected((prev) => (prev === key ? null : key));
   };
@@ -40,15 +37,23 @@ const MemoryMap = () => {
     if (selected === "projects") target = projectRef.current;
     if (!target) return;
 
-    const rect = target.getBoundingClientRect();
-
     setTransitionReady(false);
 
-    inspector.style.opacity = "1";
-    inspector.style.top = `${rect.top}px`;
-    inspector.style.left = `${rect.left}px`;
-    inspector.style.width = `${rect.width}px`;
-    inspector.style.height = `${rect.height}px`;
+    const updateInspector = () => {
+      const rect = target.getBoundingClientRect();
+      inspector.style.opacity = "1";
+      inspector.style.top = `${rect.top}px`;
+      inspector.style.left = `${rect.left}px`;
+      inspector.style.width = `${rect.width}px`;
+      inspector.style.height = `${rect.height}px`;
+    };
+
+    updateInspector();
+
+    const observer = new ResizeObserver(updateInspector);
+    observer.observe(target)
+
+    return () => observer.disconnect();
   }, [selected]);
 
   const handleTransitionEnd: TransitionEventHandler = (e) => {
@@ -76,7 +81,7 @@ const MemoryMap = () => {
           </div>
         </div>
 
-        {/* Inspector（唯一） */}
+        {/* Inspector */}
         <div
           onTransitionEnd={handleTransitionEnd}
           ref={inspectorRef}

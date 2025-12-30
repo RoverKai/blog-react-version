@@ -5,35 +5,12 @@ import {
   type TransitionEventHandler,
 } from "react";
 import StackItem from "../components/StackItem";
-import type { StackRef } from "~/types/StackItem";
 import PageTransition from "~/components/PageTransition";
 import { Link } from "react-router";
+import { memoryMap } from "~/utils/MemoryModelUtil";
+import Heap from "~/components/Heap";
 
-const memoryMap: StackRef[] = [
-  {
-    key: "name",
-    address: "0x7fa1",
-    value: "Kaijia Zhu",
-    path: "/about",
-  },
-  {
-    key: "blogs",
-    address: "0x7fa2",
-    value: "kaijia.xyz",
-    path: "/blogs",
-  },
-  {
-    key: "projects",
-    address: "0x7fa3",
-    value: "Side Projects",
-    path: "/projects",
-  },
-];
-
-const getAddressFromKey = (key: string) =>
-  memoryMap.find((item) => item.key === key)?.address;
-
-const Test = () => {
+const MemoryMap = () => {
   const [selected, setSelected] = useState<string | null>(null);
   const [transitionReady, setTransitionReady] = useState<boolean | null>(null);
 
@@ -103,54 +80,34 @@ const Test = () => {
         <div
           onTransitionEnd={handleTransitionEnd}
           ref={inspectorRef}
-          className="
-    fixed
-    border
-    bg-white/80
-    backdrop-blur
-    pointer-events-none
-    transition-all
-    duration-300
-    ease-out
-  "
+          className="fixed top-0 left-0 border bg-white/80 backdrop-blur
+            pointer-events-none transition-all duration-300 ease-out"
         />
 
         {/* Blog */}
         <div
           ref={blogRef}
-          className={`absolute top-1/5 left-1/8 w-1/4 h-1/2 ${
-            selected === "blogs" ? "" : "hidden"
-          }`}
+          className={`absolute top-1/5 left-1/8 w-1/4 h-1/2
+             ${selected === "blogs" ? "" : "hidden"}`}
         >
-          <div className="p-2 text-xs text-gray-500">
-            {getAddressFromKey("blogs")}
-          </div>
-          <div>
+          <Heap memoryMapKey="blogs">
             <Link to={"https://roverkai.github.io/"}>git page</Link>
-          </div>
+          </Heap>
         </div>
 
         {/* Project */}
         <div
           ref={projectRef}
-          className={`absolute top-1/4 right-1/6 w-1/8 h-1/2 p-4  ${
-            selected === "projects" ? "" : "hidden"
-          }`}
+          className={`absolute w-1/6 h-1/2 top-1/4 right-1/6 ${selected === "projects" ? "" : "hidden"}`}
         >
-          <div className="text-xs text-gray-500 ">
-            {getAddressFromKey("projects")}
-          </div>
-          <div className="flex flex-col *:py-2">
+          <Heap memoryMapKey="projects">
             <Link to={"https://gitee.com/roverkai/same-wave"}>same-wave</Link>
             <Link to={"http://www.cshwxc.com"}>huiwang-material</Link>
-          </div>
-        </div>
-
-        <div className="">
+          </Heap>
         </div>
       </PageTransition>
     </div>
   );
 };
 
-export default Test;
+export default MemoryMap;

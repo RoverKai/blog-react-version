@@ -2,12 +2,8 @@ import { type RouteConfig, type RouteConfigEntry, index } from "@react-router/de
 
 const route: RouteConfigEntry[] = [
   {
-    file: 'routes/custom.tsx',
-    path: 'custom'
-  },
-  {
-    file: 'routes/test.tsx',
-    path: 'test'
+    file: 'routes/MemoryMap.tsx',
+    path: 'memoryMap'
   }
 ]
 

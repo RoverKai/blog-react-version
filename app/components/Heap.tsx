@@ -12,7 +12,7 @@ const Heap = ({children, memoryMapKey}:HeapProps) => {
       <div className="text-xs text-gray-500 ">
         {getAddressFromKey(memoryMapKey)}
       </div>
-      <div className="flex flex-col *:py-2">
+      <div className="flex flex-col *:py-2 h-full">
         {children}
       </div>
     </div>

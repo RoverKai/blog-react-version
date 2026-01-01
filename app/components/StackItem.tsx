@@ -12,10 +12,12 @@ function StackItem({ item, onSelect }: StackItemProps) {
   const [hover, setHover] = useState(false);
 
   const handleClick = () => {
-    if ((item.key === 'blogs' || item.key === 'projects') && onSelect) {
+    if (item.key === 'blogs') {
+      location.href = item.path
+      return;
+    }
+    if (item.key && onSelect) {
       onSelect(item.key);
-    } else {
-      navigate(item.path);
     }
   };
 

@@ -14,16 +14,16 @@ const memoryMap: StackRef[] = [
     path: "",
   },
   {
-    key: "blogs",
-    address: "0x7fa2",
-    value: "kaijia.xyz",
-    path: "/blogs",
-  },
-  {
     key: "projects",
     address: "0x7fa3",
     value: "Side Projects",
     path: "/projects",
+  },
+  {
+    key: "blogs",
+    address: "0x7fa2",
+    value: "kaijia.xyz",
+    path: "https://roverkai.github.io",
   },
 ];
 

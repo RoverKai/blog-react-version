@@ -3,6 +3,7 @@ import {
   useState,
   useLayoutEffect,
   type TransitionEventHandler,
+  useEffect,
 } from "react";
 import StackItem from "../components/StackItem";
 import PageTransition from "~/components/PageTransition";
@@ -18,6 +19,7 @@ const MemoryMap = () => {
   const inspectorRef = useRef<HTMLDivElement>(null);
   const blogRef = useRef<HTMLDivElement>(null);
   const projectRef = useRef<HTMLDivElement>(null);
+  const professionRef = useRef<HTMLDivElement>(null);
 
   const handleSelect = (key: string) => {
     setSelected((prev) => (prev === key ? null : key));
@@ -27,14 +29,12 @@ const MemoryMap = () => {
     const inspector = inspectorRef.current;
     if (!inspector) return;
 
-    if (!selected) {
-      inspector.style.opacity = "0";
-      return;
-    }
+    inspector.style.opacity = "0";
+
 
     let target: HTMLElement | null = null;
-    if (selected === "blogs") target = blogRef.current;
     if (selected === "projects") target = projectRef.current;
+    if (selected === "profession") target = professionRef.current;
     if (!target) return;
 
     setTransitionReady(false);
@@ -51,10 +51,14 @@ const MemoryMap = () => {
     updateInspector();
 
     const observer = new ResizeObserver(updateInspector);
-    observer.observe(target)
+    observer.observe(target);
 
     return () => observer.disconnect();
   }, [selected]);
+
+  useEffect(() => {
+    console.log(transitionReady);
+  });
 
   const handleTransitionEnd: TransitionEventHandler = (e) => {
     if (
@@ -103,11 +107,26 @@ const MemoryMap = () => {
         {/* Project */}
         <div
           ref={projectRef}
-          className={`absolute w-1/6 h-1/2 top-1/4 right-1/6 ${selected === "projects" ? "" : "hidden"}`}
+          className={`absolute w-1/6 h-1/8 top-1/4 right-1/5 ${selected === "projects" ? "" : "hidden"}`}
         >
           <Heap memoryMapKey="projects">
             <Link to={"https://gitee.com/roverkai/same-wave"}>same-wave</Link>
             <Link to={"http://www.cshwxc.com"}>huiwang-material</Link>
+          </Heap>
+        </div>
+
+        {/* profession */}
+        <div
+          ref={professionRef}
+          className={`absolute left-2/5 bottom-1/6 h-1/8 w-1/4 ${selected === "profession" ? "" : "hidden"}`}
+        >
+          <Heap memoryMapKey="profession">
+            <div className="flex justify-around h-full items-center *:cursor-pointer">
+              <p>react</p>
+              <p>vue</p>
+              <p>java</p>
+              <p>rust</p>
+            </div>
           </Heap>
         </div>
       </PageTransition>

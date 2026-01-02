@@ -25,6 +25,12 @@ const memoryMap: StackRef[] = [
     value: "kaijia.xyz",
     path: "https://roverkai.github.io",
   },
+  {
+    key: "chat_with_me",
+    address: "0x7fb1",
+    value: "hallo",
+    path: "/chatWithMe"
+  }
 ];
 
 const getAddressFromKey = (key: string) =>

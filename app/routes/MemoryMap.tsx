@@ -76,7 +76,7 @@ const MemoryMap = () => {
       <PageTransition>
         <div className="flex font-mono gap-12">
           {/* Stack */}
-          <div className="border p-4 w-48">
+          <div className="border p-4 w-60">
             <div className="mb-2 text-xs text-gray-500">Stack</div>
 
             {memoryMap.map((item) => (

@@ -4,6 +4,10 @@ const route: RouteConfigEntry[] = [
   {
     file: 'routes/MemoryMap.tsx',
     path: 'memoryMap'
+  },
+  {
+    file: 'routes/Chat.tsx',
+    path: 'chatWithMe'
   }
 ]
 

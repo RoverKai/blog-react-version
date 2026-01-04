@@ -16,9 +16,6 @@ function StackItem({ item, onSelect }: StackItemProps) {
       location.href = item.path
       return;
     }
-    if (item.key === 'chat_with_me') {
-      navigate(item.path);
-    }
     if (item.key && onSelect) {
       onSelect(item.key);
     }

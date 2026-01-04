@@ -17,10 +17,8 @@ import type { ChatMessage } from "~/types/Chat";
 const MemoryMap = () => {
   const [selected, setSelected] = useState<string | null>(null);
   const [transitionReady, setTransitionReady] = useState<boolean | null>(null);
-  const [streamingMessage, setStreamingMessage] = useState<ChatMessage | null>(
-    null
-  );
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [chatMode, setChatMode] = useState<boolean>(false);
 
   /** DOM refs */
   const inspectorRef = useRef<HTMLDivElement>(null);
@@ -35,17 +33,16 @@ const MemoryMap = () => {
   };
 
   const handleNewMessage = (chunk: string) => {
-    setStreamingMessage((prev) => {
-      if (!prev) {
-        return {
-          role: "assistant",
-          content: chunk,
+    setMessages((prev) => {
+      const newMessages = [...prev];
+      const lastMessage = newMessages[newMessages.length - 1];
+      if (lastMessage.role === "assistant") {
+        newMessages[newMessages.length - 1] = {
+          ...lastMessage,
+          content: lastMessage.content + chunk,
         };
       }
-      return {
-        ...prev,
-        content: prev.content + chunk,
-      };
+      return newMessages;
     });
   };
 
@@ -64,23 +61,17 @@ const MemoryMap = () => {
       content,
     };
 
-    // 1️⃣ 先把用户消息加入 messages
-    const nextMessages = [...messages, userMessage];
+    setChatMode(true);
+    console.log("chatMode", chatMode);
+
+    // 1️⃣ 先把用户消息和空的assistant消息加入 messages
+    const nextMessages = [...messages, userMessage, { role: "assistant" as const, content: "" }];
     setMessages(nextMessages);
 
-    // 2️⃣ 重置流式消息
-    setStreamingMessage(null);
-
-    // 3️⃣ 发起流式请求
+    // 2️⃣ 发起流式请求
     await streamChat(nextMessages, handleNewMessage);
 
-    // 4️⃣ 将流式消息加入 messages
-    if (streamingMessage) {
-      setMessages((prev) => [...prev, streamingMessage]);
-      setStreamingMessage(null);
-    }
-
-    // 5️⃣ 清空输入框
+    // 3️⃣ 清空输入框
     el.innerText = "";
   };
 
@@ -127,10 +118,6 @@ const MemoryMap = () => {
     return () => observer.disconnect();
   }, [selected]);
 
-  useEffect(() => {
-    console.log(transitionReady);
-  });
-
   const handleTransitionEnd: TransitionEventHandler<HTMLDivElement> = (e) => {
     if (e.target !== inspectorRef.current) return;
     setTransitionReady(true);
@@ -139,13 +126,30 @@ const MemoryMap = () => {
   return (
     <div className="relative h-full w-full flex justify-center items-center">
       <PageTransition>
-        <div className="flex font-mono gap-12">
-          {/* Stack */}
-          <div className="border p-4 w-60">
-            <div className="mb-2 text-xs text-gray-500">Stack</div>
+        {/* Stack */}
+        <div
+          className={`border p-4 w-60 transition-opacity duration-300 ${chatMode ? "opacity-0" : "opacity-100"}`}
+        >
+          <div className="mb-2 text-xs text-gray-500">Stack</div>
 
-            {memoryMap.map((item) => (
-              <StackItem key={item.key} item={item} onSelect={handleSelect} />
+          {memoryMap.map((item) => (
+            <StackItem key={item.key} item={item} onSelect={handleSelect} />
+          ))}
+        </div>
+
+        {/* Chat Display */}
+        <div
+          className={`absolute top-0 left-0 p-4 w-full flex justify-center max-h-96 overflow-y-auto transition-opacity duration-300 ${chatMode ? "opacity-100" : "opacity-0"}`}
+        >
+          <div className="w-1/2">
+            <div className="mb-2 text-xs text-gray-500">Chat</div>
+            {messages.map((message, index) => (
+              <div key={index} className="mb-2">
+                <span className="font-bold text-green-400">
+                  {message.role}:
+                </span>{" "}
+                <span className="text-sm">{message.content}</span>
+              </div>
             ))}
           </div>
         </div>
@@ -154,8 +158,8 @@ const MemoryMap = () => {
         <div
           onTransitionEnd={handleTransitionEnd}
           ref={inspectorRef}
-          className="fixed top-0 left-0 border bg-white/80 backdrop-blur
-            pointer-events-none transition-all duration-300 ease-out rounded-none"
+          className={`fixed top-0 left-0 border bg-white/80 backdrop-blur
+            pointer-events-none transition-all duration-300 ease-out rounded-none ${chatMode ? "opacity-100" : "opacity-0"}`}
         />
 
         {/* Blog */}

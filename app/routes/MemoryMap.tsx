@@ -10,7 +10,6 @@ import PageTransition from "~/components/PageTransition";
 import { Link } from "react-router";
 import { memoryMap } from "~/utils/MemoryModelUtil";
 import Heap from "~/components/Heap";
-import { parseBorderRadius } from "~/utils/StyleUtil";
 import { streamChat } from "~/api/Chat";
 import type { ChatMessage } from "~/types/Chat";
 
@@ -62,14 +61,13 @@ const MemoryMap = () => {
     };
 
     setChatMode(true);
-    console.log("chatMode", chatMode);
 
     // 1️⃣ 先把用户消息和空的assistant消息加入 messages
     const nextMessages = [...messages, userMessage, { role: "assistant" as const, content: "" }];
     setMessages(nextMessages);
 
     // 2️⃣ 发起流式请求
-    await streamChat(nextMessages, handleNewMessage);
+    streamChat(nextMessages, handleNewMessage);
 
     // 3️⃣ 清空输入框
     el.innerText = "";
@@ -99,12 +97,7 @@ const MemoryMap = () => {
       inspector.style.width = `${rect.width}px`;
       inspector.style.height = `${rect.height}px`;
 
-      // 形状
-      inspector.style.borderRadius = parseBorderRadius(
-        style.borderRadius,
-        rect.width,
-        rect.height
-      );
+      inspector.style.borderRadius = style.borderRadius
       inspector.style.boxSizing = style.boxSizing;
     };
 
@@ -128,7 +121,7 @@ const MemoryMap = () => {
       <PageTransition>
         {/* Stack */}
         <div
-          className={`border p-4 w-60 transition-opacity duration-300 ${chatMode ? "opacity-0" : "opacity-100"}`}
+          className={`border p-4 w-60 md:w-72 lg:w-80 transition-opacity duration-300 ${chatMode ? "opacity-0" : "opacity-100"}`}
         >
           <div className="mb-2 text-xs text-gray-500">Stack</div>
 
@@ -139,10 +132,18 @@ const MemoryMap = () => {
 
         {/* Chat Display */}
         <div
-          className={`absolute top-0 left-0 p-4 w-full flex justify-center max-h-96 overflow-y-auto transition-opacity duration-300 ${chatMode ? "opacity-100" : "opacity-0"}`}
+          className={`absolute top-0 left-0 w-full flex justify-center max-h-21/24 transition-opacity duration-300 ${chatMode ? "opacity-100" : "opacity-0"}`}
         >
-          <div className="w-1/2">
-            <div className="mb-2 text-xs text-gray-500">Chat</div>
+          <div className="w-full sm:w-3/4 md:w-1/2 mt-16 px-4 sm:px-0">
+            <div className="flex justify-between items-center mb-2">
+              <div className="text-xs text-gray-500">Chat</div>
+              <button
+                onClick={() => setChatMode(false)}
+                className="text-xs text-red-400 hover:text-red-600 font-mono"
+              >
+                Exit
+              </button>
+            </div>
             {messages.map((message, index) => (
               <div key={index} className="mb-2">
                 <span className="font-bold text-green-400">
@@ -165,7 +166,7 @@ const MemoryMap = () => {
         {/* Blog */}
         <div
           ref={blogRef}
-          className={`absolute top-1/5 left-1/8 w-1/4 h-1/2
+          className={`absolute sm:absolute top-1/2 left-1/2 sm:top-1/5 sm:left-1/8 md:left-1/4 lg:left-1/8 w-3/4 sm:w-1/4 h-1/3 sm:h-1/2 transform -translate-x-1/2 -translate-y-1/2 sm:transform-none
              ${selected === "blogs" && transitionReady ? "opacity-100" : "opacity-0 pointer-events-none"}`}
         >
           <Heap memoryMapKey="blogs">
@@ -176,7 +177,7 @@ const MemoryMap = () => {
         {/* Project */}
         <div
           ref={projectRef}
-          className={`absolute w-1/6 h-1/8 top-1/4 right-1/5 min-w-48 transition-all ${selected === "projects" && transitionReady ? "opacity-100" : "opacity-0 pointer-events-none"}`}
+          className={`absolute sm:absolute top-1/2 left-1/2 sm:top-1/4 sm:right-1/5 md:right-1/5 w-3/4 sm:w-1/5 md:w-1/6 h-1/4 sm:h-1/8 min-w-48 transition-all transform -translate-x-1/2 -translate-y-1/2 sm:transform-none ${selected === "projects" && transitionReady ? "opacity-100" : "opacity-0 pointer-events-none"}`}
         >
           <Heap memoryMapKey="projects">
             <Link to={"https://gitee.com/roverkai/same-wave"}>same-wave</Link>
@@ -187,7 +188,7 @@ const MemoryMap = () => {
         {/* profession */}
         <div
           ref={professionRef}
-          className={`absolute left-2/5 bottom-1/6 h-1/8 w-1/4 transition-all ${selected === "profession" && transitionReady ? "opacity-100" : "opacity-0 pointer-events-none"}`}
+          className={`profession absolute sm:absolute top-1/4 left-1/2 sm:left-2/5 md:left-2/5 sm:bottom-1/6 h-1/4 sm:h-1/8 w-3/4 sm:w-1/3 md:w-1/5 transition-all transform -translate-x-1/2 -translate-y-1/2 sm:transform-none ${selected === "profession" && transitionReady ? "opacity-100" : "opacity-0 pointer-events-none"}`}
         >
           <Heap memoryMapKey="profession">
             <div className="flex justify-around h-full items-center *:cursor-pointer">
@@ -200,10 +201,10 @@ const MemoryMap = () => {
         </div>
 
         {/* chat input */}
-        <div className="fixed bottom-6 font-mono left-0 w-full flex justify-center">
+        <div className="fixed bottom-6 font-mono left-0 w-full flex justify-center px-4">
           <div
             ref={chatInputRef}
-            className={` w-1/2 h-14 px-5 flex items-center gap-2 rounded-full transition-all bg-zinc-900 text-zinc-100 font-mono text-sm shadow-lg shadow-black/40 border border-white/10 ${selected === "chat_with_me" && transitionReady ? "opacity-100" : "opacity-0 pointer-events-none"}`}
+            className={`w-full sm:w-3/4 md:w-1/2 h-14 px-5 flex items-center gap-2 rounded-[30px] transition-all bg-zinc-900 text-zinc-100 font-mono text-sm shadow-lg shadow-black/40 border border-white/10 ${selected === "chat_with_me" && transitionReady ? "opacity-100" : "opacity-0 pointer-events-none"}`}
           >
             <span className="text-green-400 select-none">user:$</span>
             <div

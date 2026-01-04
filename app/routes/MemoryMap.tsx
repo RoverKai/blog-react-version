@@ -10,19 +10,78 @@ import PageTransition from "~/components/PageTransition";
 import { Link } from "react-router";
 import { memoryMap } from "~/utils/MemoryModelUtil";
 import Heap from "~/components/Heap";
+import { parseBorderRadius } from "~/utils/StyleUtil";
+import { streamChat } from "~/api/Chat";
+import type { ChatMessage } from "~/types/Chat";
 
 const MemoryMap = () => {
   const [selected, setSelected] = useState<string | null>(null);
   const [transitionReady, setTransitionReady] = useState<boolean | null>(null);
+  const [streamingMessage, setStreamingMessage] = useState<ChatMessage | null>(
+    null
+  );
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
 
   /** DOM refs */
   const inspectorRef = useRef<HTMLDivElement>(null);
   const blogRef = useRef<HTMLDivElement>(null);
   const projectRef = useRef<HTMLDivElement>(null);
   const professionRef = useRef<HTMLDivElement>(null);
+  const chatInputRef = useRef<HTMLInputElement>(null);
+  const chatEditableRef = useRef<HTMLDivElement>(null);
 
   const handleSelect = (key: string) => {
     setSelected((prev) => (prev === key ? null : key));
+  };
+
+  const handleNewMessage = (chunk: string) => {
+    setStreamingMessage((prev) => {
+      if (!prev) {
+        return {
+          role: "assistant",
+          content: chunk,
+        };
+      }
+      return {
+        ...prev,
+        content: prev.content + chunk,
+      };
+    });
+  };
+
+  const handleChatKeyDown = async (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+
+    const el = chatEditableRef.current;
+    if (!el) return;
+
+    const content = el.innerText.trim();
+    if (!content) return;
+
+    const userMessage: ChatMessage = {
+      role: "user",
+      content,
+    };
+
+    // 1️⃣ 先把用户消息加入 messages
+    const nextMessages = [...messages, userMessage];
+    setMessages(nextMessages);
+
+    // 2️⃣ 重置流式消息
+    setStreamingMessage(null);
+
+    // 3️⃣ 发起流式请求
+    await streamChat(nextMessages, handleNewMessage);
+
+    // 4️⃣ 将流式消息加入 messages
+    if (streamingMessage) {
+      setMessages((prev) => [...prev, streamingMessage]);
+      setStreamingMessage(null);
+    }
+
+    // 5️⃣ 清空输入框
+    el.innerText = "";
   };
 
   useLayoutEffect(() => {
@@ -31,24 +90,36 @@ const MemoryMap = () => {
 
     inspector.style.opacity = "0";
 
-
     let target: HTMLElement | null = null;
     if (selected === "projects") target = projectRef.current;
     if (selected === "profession") target = professionRef.current;
+    if (selected === "chat_with_me") target = chatInputRef.current;
     if (!target) return;
 
     setTransitionReady(false);
 
     const updateInspector = () => {
       const rect = target.getBoundingClientRect();
+      const style = getComputedStyle(target);
+
       inspector.style.opacity = "1";
       inspector.style.top = `${rect.top}px`;
       inspector.style.left = `${rect.left}px`;
       inspector.style.width = `${rect.width}px`;
       inspector.style.height = `${rect.height}px`;
+
+      // 形状
+      inspector.style.borderRadius = parseBorderRadius(
+        style.borderRadius,
+        rect.width,
+        rect.height
+      );
+      inspector.style.boxSizing = style.boxSizing;
     };
 
     updateInspector();
+
+    console.log(target.style.borderRadius);
 
     const observer = new ResizeObserver(updateInspector);
     observer.observe(target);
@@ -60,15 +131,9 @@ const MemoryMap = () => {
     console.log(transitionReady);
   });
 
-  const handleTransitionEnd: TransitionEventHandler = (e) => {
-    if (
-      e.propertyName === "top" ||
-      e.propertyName === "left" ||
-      e.propertyName === "width" ||
-      e.propertyName === "height"
-    ) {
-      setTransitionReady(true);
-    }
+  const handleTransitionEnd: TransitionEventHandler<HTMLDivElement> = (e) => {
+    if (e.target !== inspectorRef.current) return;
+    setTransitionReady(true);
   };
 
   return (
@@ -90,14 +155,14 @@ const MemoryMap = () => {
           onTransitionEnd={handleTransitionEnd}
           ref={inspectorRef}
           className="fixed top-0 left-0 border bg-white/80 backdrop-blur
-            pointer-events-none transition-all duration-300 ease-out"
+            pointer-events-none transition-all duration-300 ease-out rounded-none"
         />
 
         {/* Blog */}
         <div
           ref={blogRef}
           className={`absolute top-1/5 left-1/8 w-1/4 h-1/2
-             ${selected === "blogs" ? "" : "hidden"}`}
+             ${selected === "blogs" && transitionReady ? "opacity-100" : "opacity-0 pointer-events-none"}`}
         >
           <Heap memoryMapKey="blogs">
             <Link to={"https://roverkai.github.io/"}>git page</Link>
@@ -107,7 +172,7 @@ const MemoryMap = () => {
         {/* Project */}
         <div
           ref={projectRef}
-          className={`absolute w-1/6 h-1/8 top-1/4 right-1/5 ${selected === "projects" ? "" : "hidden"}`}
+          className={`absolute w-1/6 h-1/8 top-1/4 right-1/5 min-w-48 transition-all ${selected === "projects" && transitionReady ? "opacity-100" : "opacity-0 pointer-events-none"}`}
         >
           <Heap memoryMapKey="projects">
             <Link to={"https://gitee.com/roverkai/same-wave"}>same-wave</Link>
@@ -118,7 +183,7 @@ const MemoryMap = () => {
         {/* profession */}
         <div
           ref={professionRef}
-          className={`absolute left-2/5 bottom-1/6 h-1/8 w-1/4 ${selected === "profession" ? "" : "hidden"}`}
+          className={`absolute left-2/5 bottom-1/6 h-1/8 w-1/4 transition-all ${selected === "profession" && transitionReady ? "opacity-100" : "opacity-0 pointer-events-none"}`}
         >
           <Heap memoryMapKey="profession">
             <div className="flex justify-around h-full items-center *:cursor-pointer">
@@ -128,6 +193,23 @@ const MemoryMap = () => {
               <p>rust</p>
             </div>
           </Heap>
+        </div>
+
+        {/* chat input */}
+        <div className="fixed bottom-6 font-mono left-0 w-full flex justify-center">
+          <div
+            ref={chatInputRef}
+            className={` w-1/2 h-14 px-5 flex items-center gap-2 rounded-full transition-all bg-zinc-900 text-zinc-100 font-mono text-sm shadow-lg shadow-black/40 border border-white/10 ${selected === "chat_with_me" && transitionReady ? "opacity-100" : "opacity-0 pointer-events-none"}`}
+          >
+            <span className="text-green-400 select-none">user:$</span>
+            <div
+              ref={chatEditableRef}
+              contentEditable
+              spellCheck={false}
+              onKeyDown={handleChatKeyDown}
+              className="flex-1 outline-none whitespace-nowrap overflow-hidden"
+            />
+          </div>
         </div>
       </PageTransition>
     </div>

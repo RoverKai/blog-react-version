@@ -1,4 +1,4 @@
-import type { ChatMessage, ChatRequest } from "~/types/Chat"
+import type { ChatMessage } from "~/types/Chat"
 
 export const streamChat = async (
   messages: ChatMessage[],

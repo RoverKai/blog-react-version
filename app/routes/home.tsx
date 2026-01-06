@@ -1,8 +1,7 @@
-import type { Route } from "./+types/home";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import PageTransition from "~/components/PageTransition";
-export function meta({}: Route.MetaArgs) {
+export function meta() {
   return [
     { title: "New React Router App" },
     { name: "description", content: "Welcome to React Router!" },
@@ -10,13 +9,6 @@ export function meta({}: Route.MetaArgs) {
 }
 
 export default function Home() {
-  const me = {
-    name: "Kaijia Zhu",
-    age: "20",
-    profession: "Software Engineer - full stack",
-    status: "Status.FALL_IN_LOVE",
-    langurage: "Java, Javascript, Rust",
-  };
 
   const meString: string = `fn main() {
     let mut me = People {
@@ -28,14 +20,12 @@ export default function Home() {
         blogs: "http://kaijia.xyz"
     };
 }`;
-  const qual = JSON.stringify({});
-
   const [print, setPrint] = useState("");
   const navigate = useNavigate();
 
   useEffect(() => {
     let i = 0;
-    let waitTime = 40;
+    const waitTime = 40;
 
     const timer = setInterval(() => {
       setPrint(meString.slice(0, i));

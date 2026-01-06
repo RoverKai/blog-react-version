@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useNavigate } from "react-router";
 import type { StackRef } from "~/types/StackItem";
 
 type StackItemProps = {
@@ -8,7 +7,6 @@ type StackItemProps = {
 };
 
 function StackItem({ item, onSelect }: StackItemProps) {
-  const navigate = useNavigate();
   const [hover, setHover] = useState(false);
 
   const handleClick = () => {

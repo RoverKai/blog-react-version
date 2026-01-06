@@ -1,0 +1,30 @@
+name: blog CI
+
+on:
+  push:
+    branches: [ main, dev ] # 仅在推送到 main 分支时触发
+  pull_request:
+    branches: [ main, dev ] # 有人向 main 提交 PR 时触发
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 拉取代码
+        uses: actions/checkout@v4
+
+      - name: 安装 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm' # 开启缓存，加快后续安装速度
+
+      - name: 安装依赖
+        run: npm ci # 相比 npm install，ci 专门用于自动化环境，更稳定
+
+      - name: 检测代码格式
+        run: npm run lint
+
+      - name: 尝试构建项目
+        run: npm run build

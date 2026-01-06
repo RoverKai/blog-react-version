@@ -2,8 +2,7 @@ import {
   useRef,
   useState,
   useLayoutEffect,
-  type TransitionEventHandler,
-  useEffect,
+  type TransitionEventHandler
 } from "react";
 import StackItem from "../components/StackItem";
 import PageTransition from "~/components/PageTransition";
@@ -63,7 +62,11 @@ const MemoryMap = () => {
     setChatMode(true);
 
     // 1️⃣ 先把用户消息和空的assistant消息加入 messages
-    const nextMessages = [...messages, userMessage, { role: "assistant" as const, content: "" }];
+    const nextMessages = [
+      ...messages,
+      userMessage,
+      { role: "assistant" as const, content: "" },
+    ];
     setMessages(nextMessages);
 
     // 2️⃣ 发起流式请求
@@ -97,7 +100,7 @@ const MemoryMap = () => {
       inspector.style.width = `${rect.width}px`;
       inspector.style.height = `${rect.height}px`;
 
-      inspector.style.borderRadius = style.borderRadius
+      inspector.style.borderRadius = style.borderRadius;
       inspector.style.boxSizing = style.boxSizing;
     };
 
@@ -132,11 +135,12 @@ const MemoryMap = () => {
 
         {/* Chat Display */}
         <div
-          className={`absolute top-0 left-0 w-full flex justify-center max-h-21/24 transition-opacity duration-300 ${chatMode ? "opacity-100" : "opacity-0"}`}
+          className={`absolute top-0 left-0 w-full flex justify-center max-h-[85%] transition-opacity duration-300 ${chatMode ? "opacity-100" : "opacity-0 pointer-events-none"}`}
         >
-          <div className="w-full sm:w-3/4 md:w-1/2 mt-16 px-4 sm:px-0">
-            <div className="flex justify-between items-center mb-2">
-              <div className="text-xs text-gray-500">Chat</div>
+          {/* 1. 确保主面板有固定的高度或最大高度，并设置 overflow-hidden 防止内容外溢 */}
+          <div className="w-full sm:w-3/4 md:w-1/2 mt-16 p-4 bg-zinc-800 text-zinc-100 rounded-[30px] shadow-lg shadow-black/40 border border-white/10 flex flex-col max-h-[70vh]">
+            <div className="flex justify-between items-center mb-4 shrink-0">
+              <div className="text-xs text-gray-400">Chat</div>
               <button
                 onClick={() => setChatMode(false)}
                 className="text-xs text-red-400 hover:text-red-600 font-mono"
@@ -144,14 +148,18 @@ const MemoryMap = () => {
                 Exit
               </button>
             </div>
-            {messages.map((message, index) => (
-              <div key={index} className="mb-2">
-                <span className="font-bold text-green-400">
-                  {message.role}:
-                </span>{" "}
-                <span className="text-sm">{message.content}</span>
-              </div>
-            ))}
+
+            {/* 2. 消息滚动区域：添加 overflow-y-auto */}
+            <div className="overflow-y-auto pr-2 custom-scrollbar">
+              {messages.map((message, index) => (
+                <div key={index} className="mb-3 px-4">
+                  <span className="font-bold text-green-400">
+                    {message.role}:
+                  </span>{" "}
+                  <span className="text-sm">{message.content}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -188,7 +196,7 @@ const MemoryMap = () => {
         {/* profession */}
         <div
           ref={professionRef}
-          className={`profession absolute sm:absolute top-1/4 left-1/2 sm:left-2/5 md:left-2/5 sm:bottom-1/6 h-1/4 sm:h-1/8 w-3/4 sm:w-1/3 md:w-1/5 transition-all transform -translate-x-1/2 -translate-y-1/2 sm:transform-none ${selected === "profession" && transitionReady ? "opacity-100" : "opacity-0 pointer-events-none"}`}
+          className={`profession absolute sm:absolute top-1/4 left-1/2 sm:left-2/5 md:left-1/6 sm:bottom-1/6 h-1/6 sm:h-1/8 w-3/4 sm:w-1/3 md:w-1/5 transition-all transform -translate-x-1/2 -translate-y-1/2 sm:transform-none ${selected === "profession" && transitionReady ? "opacity-100" : "opacity-0 pointer-events-none"}`}
         >
           <Heap memoryMapKey="profession">
             <div className="flex justify-around h-full items-center *:cursor-pointer">

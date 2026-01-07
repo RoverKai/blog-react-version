@@ -11,6 +11,7 @@ import { memoryMap } from "~/utils/MemoryModelUtil";
 import Heap from "~/components/Heap";
 import { streamChat } from "~/api/Chat";
 import type { ChatMessage } from "~/types/Chat";
+import MarkdownViewer from "~/components/MarkdownViewer";
 
 const MemoryMap = () => {
   const [selected, setSelected] = useState<string | null>(null);
@@ -156,7 +157,7 @@ const MemoryMap = () => {
                   <span className="font-bold text-green-400">
                     {message.role}:
                   </span>{" "}
-                  <span className="text-sm">{message.content}</span>
+                  <MarkdownViewer content={message.content}/>
                 </div>
               ))}
             </div>

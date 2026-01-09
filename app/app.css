@@ -18,12 +18,12 @@ body {
   box-sizing: border-box;
 }
 
-/* 如果你依然想要新文字有“浮现”感，建议只对整体容器做一次性渐入 */
-.animate-message-in {
-  animation: fade-in 0.1s ease-in;
+/* streaming animation */
+.paragraph-node:last-child .last-char-animation {
+  animation: message-in 0.5s ease-out;
 }
 
-@keyframes fade-in {
-  from { opacity: 0; transform: translateY(5px); }
-  to { opacity: 1; transform: translateY(0); }
+@keyframes message-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }

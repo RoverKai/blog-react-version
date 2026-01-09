@@ -2,7 +2,7 @@ import {
   useRef,
   useState,
   useLayoutEffect,
-  type TransitionEventHandler
+  type TransitionEventHandler,
 } from "react";
 import StackItem from "../components/StackItem";
 import PageTransition from "~/components/PageTransition";
@@ -18,6 +18,8 @@ const MemoryMap = () => {
   const [transitionReady, setTransitionReady] = useState<boolean | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [chatMode, setChatMode] = useState<boolean>(false);
+  const [isStreaming, setIsStreaming] = useState<boolean>(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   /** DOM refs */
   const inspectorRef = useRef<HTMLDivElement>(null);
@@ -43,38 +45,6 @@ const MemoryMap = () => {
       }
       return newMessages;
     });
-  };
-
-  const handleChatKeyDown = async (e: React.KeyboardEvent<HTMLDivElement>) => {
-    if (e.key !== "Enter") return;
-    e.preventDefault();
-
-    const el = chatEditableRef.current;
-    if (!el) return;
-
-    const content = el.innerText.trim();
-    if (!content) return;
-
-    const userMessage: ChatMessage = {
-      role: "user",
-      content,
-    };
-
-    setChatMode(true);
-
-    // 1️⃣ 先把用户消息和空的assistant消息加入 messages
-    const nextMessages = [
-      ...messages,
-      userMessage,
-      { role: "assistant" as const, content: "" },
-    ];
-    setMessages(nextMessages);
-
-    // 2️⃣ 发起流式请求
-    streamChat(nextMessages, handleNewMessage);
-
-    // 3️⃣ 清空输入框
-    el.innerText = "";
   };
 
   useLayoutEffect(() => {
@@ -120,6 +90,46 @@ const MemoryMap = () => {
     setTransitionReady(true);
   };
 
+  // 1. 自动滚动逻辑
+  useLayoutEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTo({
+        top: scrollRef.current.scrollHeight,
+        behavior: isStreaming ? "auto" : "smooth", // 生成时快滚，完成后平滑滚
+      });
+    }
+  }, [messages, isStreaming]);
+
+  // 2. 发送逻辑
+  const handleChatKeyDown = async (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key !== "Enter" || e.shiftKey) return;
+    e.preventDefault();
+
+    const el = chatEditableRef.current;
+    if (!el) return;
+
+    const content = el.innerText.trim();
+    if (!content) return;
+
+    setIsStreaming(true); // 开始流式传输
+    setChatMode(true);
+
+    const userMessage: ChatMessage = { role: "user", content };
+    const assistantInitial: ChatMessage = { role: "assistant", content: "" };
+
+    setMessages((prev) => [...prev, userMessage, assistantInitial]);
+    el.innerText = "";
+
+    // 调用 API
+    try {
+      await streamChat([...messages, userMessage], (chunk) => {
+        handleNewMessage(chunk);
+      });
+    } finally {
+      setIsStreaming(false); // 结束流式传输，光标消失
+    }
+  };
+
   return (
     <div className="relative h-full w-full flex justify-center items-center">
       <PageTransition>
@@ -136,30 +146,68 @@ const MemoryMap = () => {
 
         {/* Chat Display */}
         <div
-          className={`absolute top-0 left-0 w-full flex justify-center max-h-[85%] transition-opacity duration-300 ${chatMode ? "opacity-100" : "opacity-0 pointer-events-none"}`}
+          className={`absolute top-0 left-0 w-full flex justify-center max-h-[85%] transition-opacity duration-500 ${
+            chatMode ? "opacity-100" : "opacity-0 pointer-events-none"
+          }`}
         >
-          {/* 1. 确保主面板有固定的高度或最大高度，并设置 overflow-hidden 防止内容外溢 */}
-          <div className="w-full sm:w-3/4 md:w-1/2 mt-16 p-4 bg-zinc-800 text-zinc-100 rounded-[30px] shadow-lg shadow-black/40 border border-white/10 flex flex-col max-h-[70vh]">
-            <div className="flex justify-between items-center mb-4 shrink-0">
-              <div className="text-xs text-gray-400">Chat</div>
+          <div className="w-full sm:w-3/4 md:w-2/3 mt-16 p-4 bg-zinc-800/90 backdrop-blur-md text-zinc-100 rounded-[30px] shadow-2xl shadow-black/60 border border-white/10 flex flex-col max-h-[70vh]">
+            {/* Header */}
+            <div className="flex justify-between items-center mb-4 px-2 shrink-0">
+              <div className="flex items-center gap-2">
+                <div
+                  className={`w-2 h-2 rounded-full ${isStreaming ? "bg-green-400 animate-pulse" : "bg-zinc-500"}`}
+                />
+                <span className="text-xs font-mono text-gray-400">
+                  AI_ASSISTANT_SESSION
+                </span>
+              </div>
               <button
-                onClick={() => setChatMode(false)}
-                className="text-xs text-red-400 hover:text-red-600 font-mono"
+                onClick={() => {
+                  setChatMode(false);
+                  // 退出时建议清空或保留状态
+                }}
+                className="text-xs text-zinc-500 hover:text-red-400 transition-colors font-mono"
               >
-                Exit
+                [ EXIT ]
               </button>
             </div>
 
-            {/* 2. 消息滚动区域：添加 overflow-y-auto */}
-            <div className="overflow-y-auto pr-2 custom-scrollbar">
-              {messages.map((message, index) => (
-                <div key={index} className="mb-3 px-4">
-                  <span className="font-bold text-green-400">
-                    {message.role}:
-                  </span>{" "}
-                  <MarkdownViewer content={message.content}/>
-                </div>
-              ))}
+            {/* 消息滚动区域 */}
+            <div
+              ref={scrollRef}
+              className="overflow-y-auto pr-2 custom-scrollbar flex-1"
+            >
+              {messages.map((message, index) => {
+                const isLast = index === messages.length - 1;
+                const isAssistant = message.role === "assistant";
+
+                return (
+                  <div key={index} className="mb-6 px-2 group">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span
+                        className={`text-[10px] font-black uppercase tracking-widest ${
+                          isAssistant ? "text-green-400" : "text-blue-400"
+                        }`}
+                      >
+                        {message.role}
+                      </span>
+                      <div className="h-[1px] flex-1 bg-white/5 group-hover:bg-white/10 transition-colors" />
+                    </div>
+
+                    <div className="relative text-sm leading-relaxed text-zinc-200 pl-1">
+                      {/* Markdown 内容渲染 */}
+                      <div className="inline">
+                        <MarkdownViewer content={message.content} />
+                      </div>
+
+                      {/* 光标逻辑：仅在最后一条 assistant 消息且正在流式输出时显示 */}
+                      {isStreaming && isLast && isAssistant && (
+                        <span className="streaming-cursor" />
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
@@ -213,7 +261,7 @@ const MemoryMap = () => {
         <div className="fixed bottom-6 font-mono left-0 w-full flex justify-center px-4">
           <div
             ref={chatInputRef}
-            className={`w-full sm:w-3/4 md:w-1/2 h-14 px-5 flex items-center gap-2 rounded-[30px] transition-all bg-zinc-900 text-zinc-100 font-mono text-sm shadow-lg shadow-black/40 border border-white/10 ${selected === "chat_with_me" && transitionReady ? "opacity-100" : "opacity-0 pointer-events-none"}`}
+            className={`w-full sm:w-3/4 md:w-2/3 h-14 px-5 flex items-center gap-2 rounded-[30px] transition-all bg-zinc-900 text-zinc-100 font-mono text-sm shadow-lg shadow-black/40 border border-white/10 ${selected === "chat_with_me" && transitionReady ? "opacity-100" : "opacity-0 pointer-events-none"}`}
           >
             <span className="text-green-400 select-none">user:$</span>
             <div

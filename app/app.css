@@ -20,7 +20,7 @@ body {
 
 /* streaming animation */
 .paragraph-node:last-child .last-char-animation {
-  animation: message-in 0.5s ease-out;
+  animation: message-in 0.5s ease-in;
 }
 
 @keyframes message-in {

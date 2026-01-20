@@ -20,6 +20,7 @@ const MemoryMap = () => {
   const [chatMode, setChatMode] = useState<boolean>(false);
   const [isStreaming, setIsStreaming] = useState<boolean>(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const xiaozeng = 0;
 
   /** DOM refs */
   const inspectorRef = useRef<HTMLDivElement>(null);
@@ -76,8 +77,6 @@ const MemoryMap = () => {
     };
 
     updateInspector();
-
-    console.log(target.style.borderRadius);
 
     const observer = new ResizeObserver(updateInspector);
     observer.observe(target);

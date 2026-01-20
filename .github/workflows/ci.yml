@@ -2,7 +2,7 @@ name: blog CI
 
 on:
   push:
-    branches: [ main, dev ] # 仅在推送到 main 分支时触发
+    branches: [ main, dev, feat/animate-stream ] # 仅在推送到 main 分支时触发
   pull_request:
     branches: [ main, dev ] # 有人向 main 提交 PR 时触发
 

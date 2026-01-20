@@ -137,6 +137,7 @@ const MemoryMap = () => {
           className={`border p-4 w-60 md:w-72 lg:w-80 transition-opacity duration-300 ${chatMode ? "opacity-0" : "opacity-100"}`}
         >
           <div className="mb-2 text-xs text-gray-500">Stack</div>
+          <div>{{xiaozeng}}</div>
 
           {memoryMap.map((item) => (
             <StackItem key={item.key} item={item} onSelect={handleSelect} />
